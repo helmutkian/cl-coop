@@ -30,7 +30,7 @@ The function **make-generator** constructs a **generator** object from a continu
 
 ### Example:
 
-````
+````common-lisp
 (make-generator 
   (lambda/cc (yield-continuation)
     (funcall yield-continuation 'hello)
@@ -60,7 +60,7 @@ If previous call to **next** has exhausted the **generator**, then the method wi
 
 ### Example:
 
-````
+````common-lisp
 (defvar *gen*
   (make-generator 
     (lambda/cc (yield-continuation)
@@ -97,7 +97,7 @@ If previous call to **next** has exhausted the **generator**, then the method wi
 The default method of **exhaustedp** on subclasses of **generator-mixin** returns *t* if its argument is an **exhausted-generator** and **nil** otherwise.
 
 
-````
+````common-lisp
 (defvar *gen*
   (make-generator 
     (lambda/cc (yield-continuation)
@@ -148,7 +148,7 @@ The **with-generator** environment provides the local macro **yield** which yiel
 ### Example:
 
 
-````
+````common-lisp
 (defvar *gen*
   (with-generator
     (yield 'hello)
