@@ -1,4 +1,3 @@
-
 # CL-COOP
 
 A cooperative multitasking library for Common Lisp that provides generators and coroutines. 
@@ -15,3 +14,6 @@ Provides an implementation of Python-like generator functions.
 
 Provides an implementation of coroutines.
 
+## License
+
+CL-COOP is released under the LLGPL. That is the [LGPL](http://www.gnu.org/copyleft/lgpl.html) with the [Franz preamble](http://opensource.franz.com/preamble.html).
