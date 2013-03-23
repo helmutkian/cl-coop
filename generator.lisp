@@ -5,26 +5,26 @@
 ;;; ***************************************************************
 
 
-(defclass generator-mixin () ()
-  (:documentation
-   "Abstract base class for GENERATORs."))
 
-(defclass exhausted-generator (generator-mixin) ()
-  (:documentation 
-   "A 'null' GENERATOR that can no longer yield values."))
-
-(defclass generator (generator-mixin)
-  ((continuation
+(defclass generator ()
+  ((%continuation
     :reader continuation
     :initarg :continuation
     :documentation 
-    "CL-CONT::FUNCALLABLE/CC object used to implement generator"))
+    "CL-CONT::FUNCALLABLE/CC object used to implement generator")
+   (%status
+    :accessor status-of
+    :reader deadp
+    :initform nil
+    :documentation 
+    "Sentinel value for whether or not generator has been exhausted."
   (:documentation 
    "Wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
     external GENERATOR protocol for FUNCALLABLE objects")) 
 
 ;;; ***************************************************************
 ;;; ***************************************************************                    
+
 (defparameter *generator-exhausted* (gensym)
   "Symbol which represents when GENERATOR which has reached the
    end of its execution.")
@@ -34,7 +34,7 @@
    Takes a closure formed within a dynamic CL-CONT:WITH-CALL/CC 
    environment whose only argument represents the calling 
    continuation to be yielded to and returns a GENERATOR object."
-  (let (state)
+  (let (state arg)
     (setf state
 	  (lambda (k)
 	    (funcall function
@@ -47,43 +47,25 @@
 	    *generator-exhausted*
 	    ))
     (make-instance 'generator
-		   :continuation (lambda () 
+		   :continuation (lambda ()
+				   (setf arg)
 				   (call/cc state)))))
 
 ;;; ***************************************************************
 ;;; ***************************************************************
 
-(defgeneric next (generator)
-  (:documentation 
-   "Handles advancing the execution of 
-    the generator to the  next value to be yielded."))
 
-(defmethod next ((generator generator))
-  (let ((yield-value (funcall (continuation generator))))
-    (if (eql yield-value *generator-exhausted*)
-	(values nil (change-class generator 'exhausted-generator))
-	(values yield-value generator))))
-
-(defmethod next ((generator exhausted-generator))
-  (values nil generator))
-
-;;; ***************************************************************
-;;; ***************************************************************
-
-(defgeneric exhaustedp (generator)
-  (:documentation 
-   "Determines whether a GENERATOR has exhausted its execution and
-    can no longer yield values."))
+(defun next ((the-generator generator))
+  "Handles advancing the execution of the generator to the 
+   next value to be yielded."
+  (when (not (deadp the-generator))
+    (let ((yield-value (funcall (continuation the-generator))))
+      (when (eql yield-value *generator-exhausted*)
+	(setf (status-of the-generator) t))
+      yield-value)))
   
-(defmethod exhaustedp ((generator generator))
-  (declare (ignore generator))
-  nil)
 
-(defmethod exhaustedp ((generator exhausted-generator))
-  (declare (ignore generator))
-  t)
- 
-;;; ***************************************************************
+ ;;; ***************************************************************
 ;;; ***************************************************************
 
 (defmacro with-generator (&body body)

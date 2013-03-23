@@ -2,27 +2,11 @@
   (:nicknames #:cl-coop.generator))
   (:use #:common-lisp
 	#:cl-cont)
-  (:export #:generator-mixin
-	   #:generator
-	   #:exhausted-generator
+  (:export #:generator
 	   #:make-generator
 	   #:next
-	   #:exhaustedp
+	   #:deadp
 	   #:with-generator))
-
-(defpackage #:com.helmutkian.cl-coop.%queue
-  (:nicknames #:%queue)
-  (:use #:common-lisp)
-  (:shadow #:push
-	   #:pop)
-  (:export #:queue
-	   #:make-queue
-	   #:push
-	   #:pop
-	   #:emptyp)
-  (:documentation
-   "Utility package used internally to implement 
-    :COM.HELMUTKIAN.CL-COOP.COROUTINE package."))
 
 (defpackage #:com.helmutkian.cl-coop.coroutine
   (:nicknames #:cl-coop.coroutine)
