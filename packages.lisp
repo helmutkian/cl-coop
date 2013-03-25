@@ -13,14 +13,9 @@
   (:use #:common-lisp
 	#:com.helmutkian.cl-tacit
 	#:com.helmutkian.cl-coop.generator)
-  (:export #:coroutine-queue
-	   #:make-coroutine-queue
-	   #:*coroutine-queue*
-	   #:run-coroutines
-	   #:halt-coroutines
-	   #:coroutine
-	   #:exhausted-coroutine
+  (:export #:coroutine
 	   #:make-coroutine
-	   #:with-coroutine))
+           #:with-coroutine
+	   #:start))
 	   
  
