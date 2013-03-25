@@ -3,7 +3,7 @@
 
 
 (defclass coroutine ()
-  ((generator 
+  ((%generator 
     :reader generator
     :initarg generator)))
 
@@ -20,7 +20,8 @@
 	  ,@body)))))
 
 (defun start (coroutine &optional initval)
-  (do ((process coroutine (next process)))
+  (do ((process (next (generator coroutine)) 
+		(next (generator process))))
       ((deadp process))))
       
 
