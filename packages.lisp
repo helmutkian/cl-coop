@@ -19,3 +19,12 @@
 	   #:start))
 	   
  
+(defpackage #:com.helmutkian.cl-coop.generator.test
+  (:nicknames #:cl-coop.generator.test)
+  (:use #:common-lisp
+	#:com.helmutkian.cl-coop.generator
+	#:cl-cont
+	#:5am)
+  (:export #:test-make-generator
+	   #:test-with-generator)
+  (:documentation "Package of unit tests for CL-COOP.GENERATOR package."))
