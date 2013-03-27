@@ -45,7 +45,7 @@
 			       (funcall k result)))))
 	    *generator-exhausted*))
     (make-instance 'generator
-		   :continuation (lambda (&optional arg)
+		   :continuation (lambda ()
 				   (call/cc state)))))
 
 ;;; ***************************************************************
