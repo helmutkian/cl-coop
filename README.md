@@ -13,7 +13,7 @@ The low-level route involves passing a continuation (i.e. **cl-cont::funcallable
 ````common-lisp
 (defvar *g*
   (make-generator 
-    (lambda/cc (calling-continuation)
+    (cl-cont:lambda/cc (calling-continuation)
       (funcall calling-continuation 1)
       (funcall calling-continuation 2)
       (funcall calling-continuation 3)))
@@ -59,7 +59,7 @@ The high-level route uses the macro **with-generator**.  This macro wraps its bo
 => 3
 `````	
 
-Because they rely on execution within a **cl-cont:with-call/cc** environment, **generator**s are subject to the same limitations as other code within the same environment.  Yielding calls, i.e. calls to the calling continuation in the low-level **make-generator** constructor and calls to **yield** in the high-level **with-generator** constructor, cannot occur within closures passed to built-in fuctions such as **reduce** or **mapcar** since these functions have not been written in a continuation-passing style and are not within a **cl-cont:with-call/cc** environment.  The list of operators that yielding calls can occur within is [here](http://www.lispworks.com/documentation/HyperSpec/Body/03_ababa.htm), with the exceptions of **catch**, **throw**, **progv**, and **unwind-protect**.
+Because they rely on execution within a **cl-cont:with-call/cc** environment, **generator**s are subject to the same limitations as other code within the same environment.  Yielding calls, i.e. calls to the calling continuation in the low-level **make-generator** constructor and calls to **yield** in the high-level **with-generator** constructor, cannot occur within closures passed to functions not withinthe same environment such as **reduce** or **mapcar**.  The list of operators that yielding calls can occur within is [here](http://www.lispworks.com/documentation/HyperSpec/Body/03_ababa.htm), with the exceptions of **catch**, **throw**, **progv**, and **unwind-protect**.
 
 ## COM.HELMUTKIAN.CL-COOP.COROUTINES
 
