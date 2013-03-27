@@ -17,10 +17,10 @@
     :reader deadp
     :initform nil
     :documentation 
-    "Sentinel value for whether or not generator has been exhausted."
+    "Sentinel value for whether or not generator has been exhausted."))
   (:documentation 
    "Wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
-    external GENERATOR protocol for FUNCALLABLE objects")) 
+    external GENERATOR protocol for FUNCALLABLE objects"))
 
 ;;; ***************************************************************
 ;;; ***************************************************************                    
@@ -34,7 +34,7 @@
    Takes a closure formed within a dynamic CL-CONT:WITH-CALL/CC 
    environment whose only argument represents the calling 
    continuation to be yielded to and returns a GENERATOR object."
-  (let (state arg)
+  (let (state)
     (setf state
 	  (lambda (k)
 	    (funcall function
@@ -43,25 +43,23 @@
 			     (let/cc resume
 			       (setf state resume)
 			       (funcall k result)))))
-	    (funcall k nil)
-	    *generator-exhausted*
-	    ))
+	    *generator-exhausted*))
     (make-instance 'generator
-		   :continuation (lambda ()
-				   (setf arg)
+		   :continuation (lambda (&optional arg)
 				   (call/cc state)))))
 
 ;;; ***************************************************************
 ;;; ***************************************************************
 
 
-(defun next ((the-generator generator))
+(defun next (the-generator)
   "Handles advancing the execution of the generator to the 
    next value to be yielded."
   (when (not (deadp the-generator))
     (let ((yield-value (funcall (continuation the-generator))))
       (when (eql yield-value *generator-exhausted*)
-	(setf (status-of the-generator) t))
+	(setf (status-of the-generator) t
+	      yield-value nil))
       yield-value)))
   
 
