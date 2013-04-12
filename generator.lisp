@@ -30,10 +30,65 @@
    end of its execution.")
 
 (defun/cc make-generator (function)
-  "Constructor for GENERATOR.
-   Takes a closure formed within a dynamic CL-CONT:WITH-CALL/CC 
-   environment whose only argument represents the calling 
-   continuation to be yielded to and returns a GENERATOR object."
+  "***** SYNTAX *****
+
+   MAKE-GENERATOR (function) => generator
+
+   ***** ARGUMENTS & VALUES *****
+
+   function -- closure over a CL-CONT:WITH-CALL/CC environment 
+               that takes at least one argument
+   generator -- GENERATOR object  
+
+
+   ***** DESCRIPTION *****
+
+   Constructor for GENERATOR.
+
+   Takes a closure over a CL-CONT:WITH-CALL/CC 
+   environment with a mandatory first argument represents the
+   continuation yielded to when the GENERATOR's execution is 
+   suspended. The closure may optionally take a second argument 
+   representing the value passed to the GENERATOR upon the
+   resumption of its execution.
+
+   ***** EXAMPLE *****
+
+   ;;; WITHOUT additional argument
+
+   (defvar *g0*
+     (make-generator 
+       (lambda/cc (yield-cont)
+         (funcall yield-cont 1)
+         (funcall yield-cont 2)
+         (funcall yield-cont 3))))
+
+   (next *g0*)
+   => 1
+   (next *g0*)
+   => 2
+   (next *g0*)
+   => 3
+   (next *g0*)
+   => NIL
+
+   ;;; WITH additional argument
+
+   (defvar *g1*
+     (make-generator 
+       (lambda/cc (yield-cont arg)
+         (let (resume-value)
+           (setf resume-value (funcall yield-cont 
+                                       (1+ arg))
+                 resume-value (funcall yield-cont 
+                                       (1+ resume-value)))))))
+
+   (next *g1* 1)
+   => 2
+   (next *g1* 5)
+   => 6
+   (next *g1* 12)
+   NIL"
   (let (local-state return/resume)
     (setf local-state
 	  (lambda (&rest args)
@@ -47,7 +102,6 @@
 		(apply old-state args)))))
     (make-instance 'generator
 		   :continuation return/resume)))
-
 ;;; ***************************************************************
 ;;; ***************************************************************
 
