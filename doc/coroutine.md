@@ -1,39 +1,161 @@
-# *Protocol* Coroutine
 
-## *Class* COROUTINE-QUEUE
+# Protocol COROUTINE
 
-Dispatch queue for coroutines. Coroutines may yield a pointer to another coroutine in the queue to directly dispatch to or yield to the next coroutine within the queue.
+## Class COROUTINE
 
-## *Class* COROUTINE-MIXIN
+Wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
+external COROUTINE protocol for FUNCALLABLE objects
 
-Abstract base class that gives its subclasses minimal access to the **coroutine** protocol.
+## Function MAKE-COROUTINE
 
-## *Class* COROUTINE
+### SYNTAX 
 
-A "live" coroutine that can continue to execute statements.
+MAKE-COROUTINE closure/cc => coroutine
 
-## *Class* EXHAUSTED-COROUTINE
+### ARGUMENTS & VALUES 
 
-A "dead" coroutine whose execution has ceased.
+closure/cc -- closure over a CL-CONT:WITH-CALL/CC environment 
+                 that takes at least one argument
+coroutine -- COROUTINE object  
 
-## *Function* MAKE-COROUTINE-QUEUE
 
-A constructor for an empty **coroutine-queue**.
+### DESCRIPTION 
 
-## *Function* MAKE-COROUTINE
+Constructor for COROUTINE.
 
-### Description:
+Takes a closure over a CL-CONT:WITH-CALL/CC 
+environment with a mandatory first argument represents the
+continuation yielded to when the COROUTINE's execution is 
+suspended. The closure may optionally take a second argument 
+representing the value passed to the COROUTINE upon the
+resumption of its execution.
 
-The function **make-coroutine** constructs a "raw" **coroutine** object that can either be run on its own as a **generator** or added to a **coroutine-queue**.
+Returns a COROUTINE object which can be suspended and resumed
+with respect to the closure's calls to its yielded-to 
+continuation.
 
-## *Function* PUSH-COROUTINE
+### EXAMPLE 
 
-### Description:
+;;; WITHOUT additional argument
 
-Pushes a **coroutine** object onto a **coroutine-queue**.
+(defvar *g0*
+  (make-coroutine 
+    (lambda/cc (yield-cont)
+      (funcall yield-cont 1)
+      (funcall yield-cont 2)
+      (funcall yield-cont 3))))
+=> <COROUTINE>
 
-## *Function* START-COROUTINES
+(next *g0*)
+=> 1
+(next *g0*)
+=> 2
+(next *g0*)
+=> 3
+(next *g0*)
+=> NIL
 
-### Description
+;;; WITH additional argument
+(defvar *g1*
+  (make-coroutine 
+    (lambda/cc (yield-cont arg)
+      (let (resume-value)
+        (setf resume-value (funcall yield-cont 
+                                   (1+ arg))
+              resume-value (funcall yield-cont 
+                                    (1+ resume-value)))))))
+=> <COROUTINE>
 
-Begins the exection of the **coroutine**s within a  **coroutine-queue**.
+(next *g1* 1)
+=> 2
+(next *g1* 5)
+=> 6
+(next *g1* 12)
+=> NIL
+
+## Function NEXT
+
+### Syntax
+
+ NEXT the-coroutine [arg] => value
+
+### ARGUMENTS & VALUES 
+
+the-coroutine -- coroutine whose execution is to advanced
+                 to the next yield
+arg           -- optional argument to be passed to the coroutine
+                 upon its resumption
+value         -- value yielded by coroutine
+
+### DESCRIPTION
+
+Handles advancing the execution of the given coroutine to the 
+next value to be yielded. 
+
+Passes an additional optional argument to the coroutine and
+returns the yielded value of the coroutine.
+
+Returns NIL if the coroutine has reached the end of its
+execution.
+
+### EXAMPLE
+
+See EXAMPLE section for MAKE-COROUTINE
+
+
+## Macro WITH-COROUTINE
+
+### SYNTAX
+
+WITH-COROUTINE (arg) body* => coroutine
+
+### ARGUMENT & VALUES 
+
+arg -- A list of up-to one element naming the optional
+       initial argument of the coroutine
+body -- Implicit PROGN within a closure over a
+        CL-CONT:WITH-CALL/CC environment
+coroutine -- COROUTINE object
+
+### DESCRIPTION 
+
+Macro which wraps it's body within a
+CL-CONT:WITH-CALL/CC environment closure and constructs a
+COROUTINE thereof. The macro provides a local macro YIELD which
+yields a given value to the calling environment.
+
+### EXAMPLE 
+
+;;; WITHOUT additional argument
+
+(defvar *g0*
+  (with-coroutine ()
+      (yield 1)
+      (yield 2)
+      (yield 3))))
+=> <COROUTINE>
+
+(next *g0*)
+=> 1
+(next *g0*)
+=> 2
+(next *g0*)
+=> 3
+(next *g0*)
+=> NIL
+
+;;; WITH additional argument
+
+(defvar *g1*
+  (with-coroutine (arg)
+      (let (resume-value)
+        (setf resume-value (yield (1+ arg))
+              resume-value (yield (1+ resume-value))))))
+=> <COROUTINE>
+
+(next *g1* 1)
+=> 2
+(next *g1* 5)
+=> 6
+(next *g1* 12)
+=> NIL
