@@ -1,70 +1,113 @@
+
 # CL-COOP
 
-A cooperative multitasking library for Common Lisp that provides generators and coroutines. 
+## What is cooperative multitasking?
 
-# Packages
+Cooperative multitasking is contrasted with preemptive multitasking.  With preemptive multitasking, usually encountered in the traditional threading approach to multitasking, either the operating system, virtual machine, or language runtime determines the execution of tasks with little-to-no input from the code itself.  With cooperative multitasking, each task must manually suspend its own execution in order to permit the execution of other tasks.  In preemptive multitasking, individual tasks are usually called threads.  In cooperative multitasking, individual tasks are usually called coroutines.  CL-COOP provides a coroutine implementation and an interface to make the use of cooperative multitasking simpler.
 
-## COM.HELMUTKIAN.CL-COOP.GENERATORS
+Tradition functions or "routines," are a subset of coroutines that simply suspend their execution as their last statement.  CL-COOP treats Common Lisp functions as coroutines and allows for them to interoperate.
 
-**CL-COOP** allows for both low-level and high-level means of constructing generators.  They are advanced by passing them to the function **next**, and can be checked for the end of their execution with the predicate **deadp**.
+## How do coroutines work?
 
-The low-level route involves passing a continuation (i.e. **cl-cont::funcallable/cc** object--a closure over a **cl-cont:with-call/cc** environment) to the function **make-generator**.  The continuation takes a single argument representing the calling continuation, and calling **funcall** on this argument passes a value to the caller and suspends the execution of the generator until resumed by the caller.
+Coroutines work by the programmer specifying in the body of the coroutine itself where execution may be suspended and resumed. There are three ways of suspending the currently executing coroutine.  
 
-````common-lisp
-(defvar *g*
-  (make-generator 
-    (cl-cont:lambda/cc (calling-continuation)
-      (funcall calling-continuation 1)
-      (funcall calling-continuation 2)
-      (funcall calling-continuation 3)))
+### Yielding
 
-(deadp *g*)
-=> nil
-
-(next *g*)
-=> 1
-(deadp *g*)
-=> nil
-
-(next *g*)
-=> 2
-(deadp *g*)
-=> nil
-
-(next *g*)
-=> 3
-
-(deadp *g*)
-=> t
-
-`````
-
-The high-level route uses the macro **with-generator**.  This macro wraps its body in an implicit **cl-cont:with-call/cc** environment and provides the local macro **yield**.  Calls to **yield** pass the given value to the caller and suspends the execution of the generator until resumed by the caller.
-
+The first is by suspending the current coroutine and yielding program flow to the function or coroutine which had immediately resumed its execution:
 
 ````common-lisp
-(defvar *g*
-  (with-generator
-    (yield 1)
-    (yield 2)
-    (yield 3)))
+(defvar *coro*
+  (with-coroutine ()
+    (print "hi")
+    (yield)
+    (print "bye")))
 
-(next *g*)
+(defun f ()
+  (print "say hi")
+  (next *coro*)
+  (print "say bye")
+  (next *coro*))
+
+
+(f)
+=> say hi
+=> hi
+=> say bye
+=> bye
+````
+
+### Swapping
+
+Secondly, the current coroutine can be explicitly swapped for another coroutine without regard to the calling task.  This can done with what is called a "trampoline" function:
+
+````common-lisp
+
+(defun trampoline (coro &rest arg)
+  (multiple-value-bind (swap-coro arg) (apply #'next coro arg)
+    (trampoline swap-coro arg)))
+
+(defun make-consumer (producer)
+  (with-coroutine ()
+    (print "CONSUMING")
+    (print (yield producer))
+    (print "CONSUMING")	
+    (print (yield producer))))
+
+(defun make-producer (consumer)
+  (with-coroutine
+    (print "PRODUCING")
+    (yield consumer 'a)
+    (print "PRODUCING")	
+    (yield consumer 'b)))
+
+(defvar *the-producer* nil)
+
+(defvar *the-consumer* 
+  (make-consumer *the-producer*))
+
+(setf *the-producer* 
+      (make-producer *the-consumer*))
+
+(trampoline *the-consumer*)
+
+=> CONSUMING
+=> PRODUCING
+=> A
+=> CONSUMING
+=> PRODUCING
+=> B
+
+````
+
+Obviously, without tail-call optimization, using a trampoline function could readily lead to stack overflow if there was enough "swapping" of coroutines.
+
+### Pipes
+
+Another common use for cooperative multitasking is building queues of processes, similar to application pipes in Unix-like systems.  This can be down by having a scheduling function that maintains a queue of coroutines and ceases execution when the first coroutine in the sequence has been exhausted.
+
+````common-lisp
+
+(defvar *pipe* (make-queue))
+
+(defun start-pipe (pipe &rest initarg)
+  (let ((head (queue-front pipe)))
+    (loop until (deadp head)
+          for value 
+              = (apply #'next (queue-pop pipe) initarg)
+              then (apply #'next (queue-pop pipe) value))))
+
+(defvar *number-generator*
+  (with-coroutine ()
+    (dotimes (i 3)
+      (yield i))))
+
+(queue-push *pipe* *number-generator*)
+(queue-push *pipe* #'1+)
+(queue-push *pipe* #'print)
+
+(start-pipe *pipe*)
+
 => 1
-
-(next *g*)
 => 2
-
-(next *g*)
 => 3
-`````	
-
-Because they rely on execution within a **cl-cont:with-call/cc** environment, **generator**s are subject to the same limitations as other code within the same environment.  Yielding calls, i.e. calls to the calling continuation in the low-level **make-generator** constructor and calls to **yield** in the high-level **with-generator** constructor, cannot occur within closures passed to functions not withinthe same environment such as **reduce** or **mapcar**.  The list of operators that yielding calls can occur within is [here](http://www.lispworks.com/documentation/HyperSpec/Body/03_ababa.htm), with the exceptions of **catch**, **throw**, **progv**, and **unwind-protect**.
-
-## COM.HELMUTKIAN.CL-COOP.COROUTINES
-
-Provides an implementation of coroutines.
-
-## License
-
-CL-COOP is released under the LLGPL. That is the [LGPL](http://www.gnu.org/copyleft/lgpl.html) with the [Franz preamble](http://opensource.franz.com/preamble.html).
+````
