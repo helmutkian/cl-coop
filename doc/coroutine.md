@@ -1,4 +1,3 @@
-
 # Protocol COROUTINE
 
 ## Class COROUTINE
@@ -16,6 +15,7 @@ MAKE-COROUTINE closure/cc => coroutine
 
 closure/cc -- closure over a CL-CONT:WITH-CALL/CC environment 
                  that takes at least one argument
+
 coroutine -- COROUTINE object  
 
 
@@ -36,6 +36,7 @@ continuation.
 
 ### EXAMPLE 
 
+````common-lisp
 ;;; WITHOUT additional argument
 
 (defvar *g0*
@@ -72,6 +73,7 @@ continuation.
 => 6
 (next *g1* 12)
 => NIL
+````
 
 ## Function NEXT
 
@@ -81,10 +83,11 @@ continuation.
 
 ### ARGUMENTS & VALUES 
 
-the-coroutine -- coroutine whose execution is to advanced
-                 to the next yield
+the-coroutine -- coroutine whose execution is to advanced to the next yield
+
 arg           -- optional argument to be passed to the coroutine
                  upon its resumption
+
 value         -- value yielded by coroutine
 
 ### DESCRIPTION
@@ -113,8 +116,10 @@ WITH-COROUTINE (arg) body* => coroutine
 
 arg -- A list of up-to one element naming the optional
        initial argument of the coroutine
+
 body -- Implicit PROGN within a closure over a
         CL-CONT:WITH-CALL/CC environment
+
 coroutine -- COROUTINE object
 
 ### DESCRIPTION 
@@ -126,6 +131,7 @@ yields a given value to the calling environment.
 
 ### EXAMPLE 
 
+````common-lisp
 ;;; WITHOUT additional argument
 
 (defvar *g0*
@@ -159,3 +165,4 @@ yields a given value to the calling environment.
 => 6
 (next *g1* 12)
 => NIL
+````
