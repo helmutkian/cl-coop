@@ -1,5 +1,12 @@
-
 # CL-COOP
+
+## Summary
+
+CL-COOP is a cooperative multitasking libary for Common Lisp.  Cooperative multitasking is an worse-is-better approach to managing multiple tasks (e.g. threads) in an application that avoids the complications of asynchronous threading while fufilling a large portion of multitasking needs.  Thanks to the concise nature of Common Lisp, this library consists of only a few terse lines of code, but provides a powerful and flexible abstraction. CL-COOP relies on the CL-CONT library as subject to the same limitations.
+
+Unit tests are written using the FIVEAM unit testing package and are located in the test/ subdirectory.
+
+Extensive documentation is provided in-code, as well as documentation of the library's public interface within the doc/ subdirectory.
 
 ## What is cooperative multitasking?
 
