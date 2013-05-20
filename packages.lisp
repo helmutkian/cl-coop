@@ -6,5 +6,6 @@
 	   #:make-coroutine
 	   #:next
 	   #:deadp
-	   #:with-coroutine))
+	   #:with-coroutine
+	   #:yield))
 
