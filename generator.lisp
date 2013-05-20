@@ -1,58 +1,58 @@
 
-(in-package #:com.helmutkian.cl-coop.generator)
+(in-package #:com.helmutkian.cl-coop.coroutine)
 
 ;;; ***************************************************************
 ;;; ***************************************************************
 
 
 
-(defclass generator ()
+(defclass coroutine ()
   ((%continuation
     :reader continuation
     :initarg :continuation
     :documentation 
-    "CL-CONT::FUNCALLABLE/CC object used to implement generator")
+    "CL-CONT::FUNCALLABLE/CC object used to implement coroutine")
    (%status
     :accessor status-of
     :reader deadp
     :initform nil
     :documentation 
-    "Sentinel value for whether or not generator has been exhausted."))
+    "Sentinel value for whether or not coroutine has been exhausted."))
   (:documentation 
    "Wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
-    external GENERATOR protocol for FUNCALLABLE objects"))
+    external COROUTINE protocol for FUNCALLABLE objects"))
 
 ;;; ***************************************************************
 ;;; ***************************************************************                    
 
-(defparameter *generator-exhausted* (gensym)
-  "Symbol which represents when GENERATOR which has reached the
+(defparameter *coroutine-exhausted* (gensym)
+  "Symbol which represents when COROUTINE which has reached the
    end of its execution.")
 
-(defun/cc make-generator (function)
+(defun/cc make-coroutine (function)
   "***** SYNTAX *****
 
-   MAKE-GENERATOR closure/cc => generator
+   MAKE-COROUTINE closure/cc => coroutine
 
    ***** ARGUMENTS & VALUES *****
 
    closure/cc -- closure over a CL-CONT:WITH-CALL/CC environment 
                  that takes at least one argument
-   generator -- GENERATOR object  
+   coroutine -- COROUTINE object  
 
 
    ***** DESCRIPTION *****
 
-   Constructor for GENERATOR.
+   Constructor for COROUTINE.
 
    Takes a closure over a CL-CONT:WITH-CALL/CC 
    environment with a mandatory first argument represents the
-   continuation yielded to when the GENERATOR's execution is 
+   continuation yielded to when the COROUTINE's execution is 
    suspended. The closure may optionally take a second argument 
-   representing the value passed to the GENERATOR upon the
+   representing the value passed to the COROUTINE upon the
    resumption of its execution.
 
-   Returns a GENERATOR object which can be suspended and resumed
+   Returns a COROUTINE object which can be suspended and resumed
    with respect to the closure's calls to its yielded-to 
    continuation.
 
@@ -61,12 +61,12 @@
    ;;; WITHOUT additional argument
 
    (defvar *g0*
-     (make-generator 
+     (make-coroutine 
        (lambda/cc (yield-cont)
          (funcall yield-cont 1)
          (funcall yield-cont 2)
          (funcall yield-cont 3))))
-   => <GENERATOR>
+   => <COROUTINE>
 
    (next *g0*)
    => 1
@@ -80,14 +80,14 @@
    ;;; WITH additional argument
 
    (defvar *g1*
-     (make-generator 
+     (make-coroutine 
        (lambda/cc (yield-cont arg)
          (let (resume-value)
            (setf resume-value (funcall yield-cont 
                                        (1+ arg))
                  resume-value (funcall yield-cont 
                                        (1+ resume-value)))))))
-    => <GENERATOR>
+    => <COROUTINE>
 
    (next *g1* 1)
    => 2
@@ -102,50 +102,50 @@
     (setf local-state
 	  (lambda (&rest arg)
 	    (apply function return/resume arg)
-	    *generator-exhausted*)
+	    *coroutine-exhausted*)
           return/resume
 	  (lambda (&rest arg)
 	    (let/cc cc
 	      (let ((old-state local-state))
 		(setf local-state cc)
 		(apply old-state arg)))))
-    (make-instance 'generator
+    (make-instance 'coroutine
 		   :continuation return/resume)))
 ;;; ***************************************************************
 ;;; ***************************************************************
 
 
-(defun next (the-generator &rest arg)
+(defun next (the-coroutine &rest arg)
   "***** SYNTAX *****
 
-   NEXT the-generator [arg] => value
+   NEXT the-coroutine [arg] => value
 
    ***** ARGUMENTS & VALUES *****
 
-   the-generator -- generator whose execution is to advanced
+   the-coroutine -- coroutine whose execution is to advanced
                     to the next yield
-   arg           -- optional argument to be passed to the generator
+   arg           -- optional argument to be passed to the coroutine
                     upon its resumption
-   value         -- value yielded by generator
+   value         -- value yielded by coroutine
 
    ***** DESCRIPTION *****
 
-   Handles advancing the execution of the given generator to the 
+   Handles advancing the execution of the given coroutine to the 
    next value to be yielded. 
 
-   Passes an additional optional argument to the generator and
-   returns the yielded value of the generator.
+   Passes an additional optional argument to the coroutine and
+   returns the yielded value of the coroutine.
 
-   Returns NIL if the generator has reached the end of its
+   Returns NIL if the coroutine has reached the end of its
    execution.
 
    ***** EXAMPLE *****
 
-   See EXAMPLE section for MAKE-GENERATOR"
-  (when (not (deadp the-generator))
-    (let ((yield-value (apply (continuation the-generator) arg)))
-      (when (eql yield-value *generator-exhausted*)
-	(setf (status-of the-generator) t
+   See EXAMPLE section for MAKE-COROUTINE"
+  (when (not (deadp the-coroutine))
+    (let ((yield-value (apply (continuation the-coroutine) arg)))
+      (when (eql yield-value *coroutine-exhausted*)
+	(setf (status-of the-coroutine) t
 	      yield-value nil))
       yield-value)))
   
@@ -153,24 +153,24 @@
  ;;; ***************************************************************
 ;;; ***************************************************************
 
-(defmacro with-generator (arg &body body)
+(defmacro with-coroutine (arg &body body)
   "***** SYNTAX *****
 
-   WITH-GENERATOR (arg) body* => generator
+   WITH-COROUTINE (arg) body* => coroutine
 
    ***** ARGUMENT & VALUES *****
 
    arg -- A list of up-to one element naming the optional
-          initial argument of the generator
+          initial argument of the coroutine
    body -- Implicit PROGN within a closure over a
            CL-CONT:WITH-CALL/CC environment
-   generator -- GENERATOR object
+   coroutine -- COROUTINE object
 
    ***** DESCRIPTION *****
 
    Macro which wraps it's body within a
    CL-CONT:WITH-CALL/CC environment closure and constructs a
-   GENERATOR thereof. The macro provides a local macro YIELD which
+   COROUTINE thereof. The macro provides a local macro YIELD which
    yields a given value to the calling environment.
 
    ***** EXAMPLE *****
@@ -178,11 +178,11 @@
    ;;; WITHOUT additional argument
 
    (defvar *g0*
-     (with-generator ()
+     (with-coroutine ()
          (yield 1)
          (yield 2)
          (yield 3))))
-   => <GENERATOR>
+   => <COROUTINE>
 
    (next *g0*)
    => 1
@@ -196,11 +196,11 @@
    ;;; WITH additional argument
 
    (defvar *g1*
-     (with-generator (arg)
+     (with-coroutine (arg)
          (let (resume-value)
            (setf resume-value (yield (1+ arg))
                  resume-value (yield (1+ resume-value))))))
-    => <GENERATOR>
+    => <COROUTINE>
 
    (next *g1* 1)
    => 2
@@ -208,11 +208,12 @@
    => 6
    (next *g1* 12)
    NIL"
-  (let ((yield-sym (gensym)))
-    `(make-generator
+  (let ((yield-sym (gensym))
+	(value (gensym)))
+    `(make-coroutine
        (lambda/cc (,yield-sym ,@arg)
 	 (macrolet 
-	     ((yield (&optional value) `(funcall ,',yield-sym value)))
+	     ((yield (&optional value) `(funcall ,',yield-sym ,,value)))
 	   ,@body)))))
 
 
