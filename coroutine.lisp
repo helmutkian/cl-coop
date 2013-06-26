@@ -14,7 +14,6 @@
     "CL-CONT::FUNCALLABLE/CC object used to implement coroutine")
    (%status
     :accessor status-of
-    :reader deadp
     :initform nil
     :documentation 
     "Sentinel value for whether or not coroutine has been exhausted."))
@@ -111,18 +110,35 @@
 		(apply old-state arg)))))
     (make-instance 'coroutine
 		   :continuation return/resume)))
+
 ;;; ***************************************************************
 ;;; ***************************************************************
 
+(defgeneric deadp (routine))
 
-(defun next (the-coroutine &rest arg)
+(defmethod deadp ((routine function))
+  (declare (ignore routine))
+  t)
+
+(defmethod deadp ((routine coroutine))
+  (status-of routine))
+
+;;; ***************************************************************
+;;; ***************************************************************
+
+(defgeneric next (routine &rest arg))
+
+(defmethod next ((routine function) &rest arg)
+  (apply routine arg))
+
+(defmethod next ((routine coroutine) &rest arg)
   "***** SYNTAX *****
 
-   NEXT the-coroutine [arg] => value
+   NEXT routine [arg] => value
 
    ***** ARGUMENTS & VALUES *****
 
-   the-coroutine -- coroutine whose execution is to advanced
+   routine -- coroutine whose execution is to advanced
                     to the next yield
    arg           -- optional argument to be passed to the coroutine
                     upon its resumption
@@ -142,10 +158,10 @@
    ***** EXAMPLE *****
 
    See EXAMPLE section for MAKE-COROUTINE"
-  (when (not (deadp the-coroutine))
-    (let ((yield-value (apply (continuation the-coroutine) arg)))
+  (when (not (deadp routine))
+    (let ((yield-value (apply (continuation routine) arg)))
       (when (eql yield-value *coroutine-exhausted*)
-	(setf (status-of the-coroutine) t
+	(setf (status-of routine) t
 	      yield-value nil))
       yield-value)))
   
