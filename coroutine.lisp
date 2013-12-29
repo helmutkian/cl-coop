@@ -27,6 +27,7 @@
    coro
    (lambda (&rest args)
      (apply #'next coro args))))
+  
 
 ;;; ***************************************************************
 ;;; ***************************************************************                    
@@ -35,7 +36,17 @@
   "Symbol which represents when COROUTINE which has reached the
    end of its execution.")
 
-(defun/cc make-coroutine (function)
+(defgeneric make-coroutine (fn)
+  (:documentation 
+   "Constructs a COROUTINE object from the given FUNCALLABLE object"))
+
+(defmethod make-coroutine ((closure function))
+  "Makes a ROUTINE, ie a COROUTINE with a single YIELD statement at its
+   end, from a CL FUNCTION."
+  (make-coroutine (lambda/cc (k &rest args)
+		    (funcall k (apply closure args)))))
+
+(defmethod make-coroutine ((closure/cc cl-cont::funcallable/cc))
   "***** SYNTAX *****
 
    MAKE-COROUTINE closure/cc => coroutine
@@ -100,23 +111,24 @@
    (next *g1* 5)
    => 6
    (next *g1* 12)
-   NIL"
-  (let (local-state return/resume)
+   NIL" 
+  (with-call/cc 
+    (let (local-state return/resume)
     ;;; LET (var ...) (SETF var ...) idiom used because mutual
     ;;; referencing in LABELS using CL-CONT:WITH-CALL/CC is 
     ;;; problematic
-    (setf local-state
-	  (lambda (&rest arg)
-	    (apply function return/resume arg)
-	    *coroutine-exhausted*)
-          return/resume
-	  (lambda (&rest arg)
-	    (let/cc cc
-	      (let ((old-state local-state))
-		(setf local-state cc)
-		(apply old-state arg)))))
-    (make-instance 'coroutine
-		   :continuation return/resume)))
+      (setf local-state
+	    (lambda (&rest arg)
+	      (apply closure/cc return/resume arg)
+	      *coroutine-exhausted*)
+	    return/resume
+	    (lambda (&rest arg)
+	      (let/cc cc
+		(let ((old-state local-state))
+		  (setf local-state cc)
+		  (apply old-state arg)))))
+      (make-instance 'coroutine
+		     :continuation return/resume))))
 
 ;;; ***************************************************************
 ;;; ***************************************************************
@@ -132,11 +144,6 @@
 
 ;;; ***************************************************************
 ;;; ***************************************************************
-
-(defgeneric next (routine &rest arg))
-
-(defmethod next ((routine function) &rest arg)
-  (apply routine arg))
 
 (defmethod next ((routine coroutine) &rest arg)
   "***** SYNTAX *****
