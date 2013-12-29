@@ -1,9 +1,8 @@
 
-(in-package #:com.helmutkian.cl-coop.coroutine)
+(in-package #:com.helmutkian.cl-coop)
 
 ;;; ***************************************************************
 ;;; ***************************************************************
-
 
 
 (defclass coroutine ()
@@ -17,9 +16,17 @@
     :initform nil
     :documentation 
     "Sentinel value for whether or not coroutine has been exhausted."))
+  (:metaclass closer-mop:funcallable-standard-class)
   (:documentation 
-   "Wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
-    external COROUTINE protocol for FUNCALLABLE objects"))
+   "Funcallable wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
+   external COROUTINE protocol for FUNCALLABLE objects"))
+
+(defmethod initialize-instance :after ((coro coroutine) &key)
+  "Calling FUNCALL on a COOP:COROUTINE is identical to calling COOP:NEXT."
+  (closer-mop:set-funcallable-instance-function
+   coro
+   (lambda (&rest args)
+     (apply #'next args))))
 
 ;;; ***************************************************************
 ;;; ***************************************************************                    

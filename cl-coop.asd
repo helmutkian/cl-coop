@@ -1,8 +1,8 @@
 
 (asdf:defsystem #:cl-coop
+  :depends-on ("cl-cont" "closer-mop")
   :components
-  ((:system "cl-cont")
-   (:file "packages"
+  ((:file "packages"
 	  :depends-on ("cl-cont"))
    (:file "coroutine"
-	  :depends-on ("packages"))))
+	  :depends-on ("packages" "closer-mop"))))
