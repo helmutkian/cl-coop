@@ -26,7 +26,7 @@
   (closer-mop:set-funcallable-instance-function
    coro
    (lambda (&rest args)
-     (apply #'next args))))
+     (apply #'next coro args))))
 
 ;;; ***************************************************************
 ;;; ***************************************************************                    
