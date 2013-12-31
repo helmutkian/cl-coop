@@ -238,14 +238,15 @@
    => 6
    (next *g1* 12)
    NIL"
-  (let ((yield-sym (gensym))
-	(value (gensym)))
+  (let ((yield-sym (gensym)))
     `(make-coroutine
        (lambda/cc (,yield-sym ,@arg)
 	 (macrolet 
-	     ((yield (&optional ,value) 
-		`(funcall ,',yield-sym ,,value)))
+	     ((yield (&optional value) 
+		`(funcall ,',yield-sym ,value)))
 	   ,@body)))))
 
 
+;;; ***************************************************************
+;;; ***************************************************************            
 
