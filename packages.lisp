@@ -7,5 +7,7 @@
 	   #:next
 	   #:deadp
 	   #:with-coroutine
-	   #:yield))
+	   #:yield
+	   #:define-coroutine-constructor
+	   #:defcoro))
 

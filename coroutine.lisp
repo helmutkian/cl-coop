@@ -250,3 +250,53 @@
 ;;; ***************************************************************
 ;;; ***************************************************************            
 
+(defmacro define-coroutine-constructor (name ctor-args coro-args &body body)
+  "***** SYNTAX *****
+
+   DEFINE-COROUTINE-CONSTRUCTOR ctor-args coro-args body* => ctor
+
+   ***** ARGUMENT & VALUES *****
+
+   ctor-args -- LIST of arguments used to parameterize the construction
+                of a coroutine.
+   coro-args -- LIST of initial arguments to the coroutine
+   body      -- Body of the coroutine
+
+   ctor      -- A FUNCTION that returns a coroutine.
+
+   ***** DESCRIPTION *****
+
+   Macro that encapsulates (defun coro-ctor (foo) (with-coroutine (bar) ...))
+   patterns for functions that construct COROUTINE objects.
+
+   ***** EXAMPLE *****
+   
+   ;;; WITHOUT additional argument
+
+   (define-coroutine-constructor counter (n) ()
+     (dotimes (i n)
+       (yield (1+ i))))
+   => <FUNCTION>
+
+   (defvar *3count* (counter 3))
+   => <COROUTINE>
+
+   (funcall *3count*)
+   => 1
+   (funcall *3count*)
+   => 2
+   (funcall *3count*)
+   => 3
+   (funcall *3count*)
+   => NIL
+
+   ;;; WITH additional argument
+
+   TODO: Example"
+  `(defun ,name ,ctor-args
+     (with-coroutine ,coro-args
+       ,@body)))
+
+(defmacro defcoro (name ctor-args coro-args &body body)
+  "Alias for DEFINE-COROUTINE-CONSTRUCTOR"
+  `(define-coroutine-constructor ,name ,ctor-args ,coro-args ,@body))
