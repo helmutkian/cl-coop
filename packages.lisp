@@ -1,5 +1,5 @@
 (defpackage #:com.helmutkian.cl-coop
-  (:nicknames #:coop)
+  (:nicknames #:cl-coop #:coop)
   (:use #:common-lisp
 	#:cl-cont)
   (:export #:coroutine
