@@ -8,6 +8,5 @@
 	   #:deadp
 	   #:with-coroutine
 	   #:yield
-	   #:define-coroutine-constructor
 	   #:defcoro))
 

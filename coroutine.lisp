@@ -250,10 +250,10 @@
 ;;; ***************************************************************
 ;;; ***************************************************************            
 
-(defmacro define-coroutine-constructor (name ctor-args coro-args &body body)
+(defmacro defcoro (name ctor-args coro-args &body body)
   "***** SYNTAX *****
 
-   DEFINE-COROUTINE-CONSTRUCTOR ctor-args coro-args body* => ctor
+   DEFCORO ctor-args coro-args body* => ctor
 
    ***** ARGUMENT & VALUES *****
 
@@ -273,7 +273,7 @@
    
    ;;; WITHOUT additional argument
 
-   (define-coroutine-constructor counter (n) ()
+   (defcoro counter (n) ()
      (dotimes (i n)
        (yield (1+ i))))
    => <FUNCTION>
@@ -297,6 +297,3 @@
      (with-coroutine ,coro-args
        ,@body)))
 
-(defmacro defcoro (name ctor-args coro-args &body body)
-  "Alias for DEFINE-COROUTINE-CONSTRUCTOR"
-  `(define-coroutine-constructor ,name ,ctor-args ,coro-args ,@body))
