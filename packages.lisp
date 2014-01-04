@@ -6,6 +6,7 @@
 	   #:make-coroutine
 	   #:next
 	   #:deadp
+	   #:alivep
 	   #:with-coroutine
 	   #:yield
 	   #:defcoro))

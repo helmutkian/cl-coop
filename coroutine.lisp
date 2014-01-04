@@ -133,14 +133,14 @@
 ;;; ***************************************************************
 ;;; ***************************************************************
 
-(defgeneric deadp (routine))
 
-(defmethod deadp ((routine function))
-  (declare (ignore routine))
-  t)
+(declaim (inline deadp))
+(defun deadp (coro)
+  (status-of coro))
 
-(defmethod deadp ((routine coroutine))
-  (status-of routine))
+(declaim (inline alivep))
+(defun alivep (coro)
+  (not (status-of coro)))
 
 ;;; ***************************************************************
 ;;; ***************************************************************
