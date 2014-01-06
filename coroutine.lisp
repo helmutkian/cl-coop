@@ -120,24 +120,27 @@
    (next *g1* 5)
    => 6
    (next *g1* 12)
-   NIL" 
-  (with-call/cc 
-    (let (local-state return/resume)
+   NIL"
+  (make-coro closure/cc))
+
+(defun/cc make-coro (closure/cc)
+  "Cannot be directly implemented in a method due to CL-CONT limitations."
+  (let (local-state return/resume)
     ;;; LET (var ...) (SETF var ...) idiom used because mutual
     ;;; referencing in LABELS using CL-CONT:WITH-CALL/CC is 
     ;;; problematic
-      (setf local-state
-	    (lambda (&rest arg)
-	      (apply closure/cc return/resume arg)
-	      *coroutine-exhausted*)
-	    return/resume
-	    (lambda (&rest arg)
-	      (let/cc cc
-		(let ((old-state local-state))
-		  (setf local-state cc)
-		  (apply old-state arg)))))
-      (make-instance 'coroutine
-		     :continuation return/resume))))
+    (setf local-state
+	  (lambda (&rest arg)
+	    (apply closure/cc return/resume arg)
+	    *coroutine-exhausted*)
+	  return/resume
+	  (lambda (&rest arg)
+	    (let/cc cc
+		    (let ((old-state local-state))
+		      (setf local-state cc)
+		      (apply old-state arg)))))
+    (make-instance 'coroutine
+		   :continuation return/resume)))
 
 ;;; ***************************************************************
 ;;; ***************************************************************
@@ -179,7 +182,7 @@
 ;;; ***************************************************************
 ;;; ***************************************************************
 
-(defun next ((routine coroutine) &rest arg)
+(defun next (routine &rest arg)
   "***** SYNTAX *****
 
    NEXT routine [arg] => value
