@@ -179,7 +179,7 @@
 ;;; ***************************************************************
 ;;; ***************************************************************
 
-(defmethod next ((routine coroutine) &rest arg)
+(defun next ((routine coroutine) &rest arg)
   "***** SYNTAX *****
 
    NEXT routine [arg] => value
