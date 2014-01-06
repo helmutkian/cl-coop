@@ -1,6 +1,7 @@
 
-(defpackage #:com.helmutkian.cl-coop.test.coroutine
+(defpackage #:com.helmutkian.cl-coop.test
+  (:nicknames #:cl-coop.test)
   (:use #:common-lisp
 	#:fiveam
 	#:cl-cont
-	#:com.helmutkian.cl-coop.coroutine))
+	#:cl-coop))

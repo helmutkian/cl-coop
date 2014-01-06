@@ -1,5 +1,5 @@
 
-(in-package #:com.helmutkian.cl-coop.test.coroutine)
+(in-package #:com.helmutkian.cl-coop.test)
 
 (test test-next-without-arg
   (let* ((coro 
