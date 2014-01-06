@@ -54,3 +54,32 @@
 	        until (null result)
 	        collect result)))
     (is (equalp results '(2 3)))))
+
+(defcoro counter (n) ()
+  (dotimes (i n)
+    (yield i)))
+
+(defcoro guessing-game (target &key (max-guesses 3)) (guess)
+  (loop repeat max-guesses
+        for result = guess then (yield 'try-again)
+        when (= result target)
+          do (yield 'win) and do (return)
+        end
+        finally (yield 'loss)))
+
+(test test-defcoro-without-arg 
+  (let ((results
+	 (loop with count = (counter 3)
+	       for c = (funcall count)
+               until (null c)
+	       collect c)))
+    (is (equalp '(0 1 2) results))))
+
+(test test-defcoro-with-arg
+  (let ((result 
+	 (loop with game = (guessing-game 100 :max-guesses 2)
+               for i from 0
+	       for g = (funcall game i)
+	       until (null g)
+	       collect g)))
+    (is (equalp '(try-again loss) result))))
