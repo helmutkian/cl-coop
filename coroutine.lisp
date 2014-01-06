@@ -4,6 +4,14 @@
 ;;; ***************************************************************
 ;;; ***************************************************************
 
+;;; Coroutine statuses
+(defparameter *dead* 0
+  "Coroutine can no longer be executed, ie no longer has values to yield")
+(defparameter *alive* 1
+  "Coroutine can be actively executed, ie still has values to yield")
+(defparameter *suspended* -1
+  "Coroutine cannot be executed but still has values to yield
+   and can be resumed.")
 
 (defclass coroutine ()
   ((%continuation
@@ -13,9 +21,10 @@
     "CL-CONT::FUNCALLABLE/CC object used to implement coroutine")
    (%status
     :accessor status-of
-    :initform nil
+    :initform *alive*
     :documentation 
-    "Sentinel value for whether or not coroutine has been exhausted."))
+    "Determines the execution status of the coroutine, whether
+     alive, dead, or suspended."))
   (:metaclass closer-mop:funcallable-standard-class)
   (:documentation 
    "Funcallable wrapper for CL-CONT::FUNCALLABLE/CC in order to provide an
@@ -133,14 +142,39 @@
 ;;; ***************************************************************
 ;;; ***************************************************************
 
-
 (declaim (inline deadp))
 (defun deadp (coro)
-  (status-of coro))
+  (eql (status-of coro) *dead*))
 
 (declaim (inline alivep))
 (defun alivep (coro)
-  (not (status-of coro)))
+  (eql (status-of coro) *alive*))
+
+(declaim (inline suspendedp))
+(defun suspendedp (coro)
+  (eql (status-of coro) *suspended*))
+
+
+(defun set-coro-status (coro status)
+  (setf (status-of coro) status)
+  coro)
+
+(defun halt (coro)
+  (set-coro-status coro *dead*))
+
+(defun suspend (coro)
+  (if (alivep coro)
+      (set-coro-status coro *suspended*)
+      (error "Cannot suspend dead coroutine")))
+
+(defun resume (coro)
+  (cond
+    ((suspendedp coro) (set-coro-status coro *alive*))
+    ((alivep coro) (warn "Coroutine already alive"))
+    ((deadp coro) (error "Cannot resume dead coroutine"))
+    (t (error "Undefined coroutine execution state"))))
+
+
 
 ;;; ***************************************************************
 ;;; ***************************************************************
@@ -172,10 +206,10 @@
    ***** EXAMPLE *****
 
    See EXAMPLE section for MAKE-COROUTINE"
-  (when (not (deadp routine))
+  (when (alivep routine)
     (let ((yield-value (apply (continuation routine) arg)))
       (when (eql yield-value *coroutine-exhausted*)
-	(setf (status-of routine) t
+	(setf (status-of routine) *dead*
 	      yield-value nil))
       yield-value)))
   

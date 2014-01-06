@@ -7,6 +7,10 @@
 	   #:next
 	   #:deadp
 	   #:alivep
+	   #:suspendedp
+	   #:halt
+	   #:suspend
+	   #:resume
 	   #:with-coroutine
 	   #:yield
 	   #:defcoro))
