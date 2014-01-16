@@ -330,7 +330,11 @@
    ;;; WITH additional argument
 
    TODO: Example"
-  `(defun ,name ,ctor-args
-     (with-coroutine ,coro-args
-       ,@body)))
+  (multiple-value-bind (fn-body decls docstr) 
+      (tcr.parse-declarations-1.0::parse-body body)
+    `(defun ,name ,ctor-args
+       ,docstr
+       ,decls
+       (with-coroutine ,coro-args
+	 ,@fn-body))))
 
